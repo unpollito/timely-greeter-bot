@@ -1,17 +1,18 @@
 use std::error::Error;
 use std::fs;
 use std::io::ErrorKind;
+use telegram_bot::ChatId;
 
-pub fn get_stored_chat_ids() -> Result<Vec<i64>, Box<dyn Error>> {
+pub fn get_stored_chat_ids() -> Result<Vec<ChatId>, Box<dyn Error>> {
     match fs::read_to_string("chat_ids.txt") {
         Ok(content) => {
-            let mut result: Vec<i64> = Vec::new();
+            let mut result: Vec<ChatId> = Vec::new();
             for line in content.lines() {
                 let parse_result = line.parse::<i64>();
                 if parse_result.is_err() {
                     return Ok(Vec::new());
                 }
-                result.push(parse_result.unwrap());
+                result.push(ChatId::new(parse_result.unwrap()));
             }
             Ok(result)
         }
@@ -24,7 +25,7 @@ pub fn get_stored_chat_ids() -> Result<Vec<i64>, Box<dyn Error>> {
     }
 }
 
-pub fn save_chat_ids(ids: &[i64]) -> Result<(), Box<dyn Error>> {
+pub fn save_chat_ids(ids: &[ChatId]) -> Result<(), Box<dyn Error>> {
     let content = ids
         .into_iter()
         .map(|id| id.to_string())

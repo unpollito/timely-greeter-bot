@@ -1,24 +1,30 @@
+use futures::StreamExt;
 use std::{
     error::Error,
+    process,
     sync::{Arc, Mutex},
     time::Duration,
 };
-use teloxide::{
-    prelude::*,
-    types::{ChatId, InputFile},
-};
-use timely_greeter_bot::{chat_id, timezone};
+use telegram_bot::types::requests::*;
+use telegram_bot::*;
+use timely_greeter_bot::{chat_id, env, timezone};
 use tokio::sync::mpsc;
 
-type ShareableIds = Arc<Mutex<Vec<i64>>>;
+type ShareableIds = Arc<Mutex<Vec<ChatId>>>;
 
 #[tokio::main]
 async fn main() {
     pretty_env_logger::init();
+    let bot_token = env::load_bot_token().unwrap_or_else(|err| {
+        log::error!("Could not read bot token: {}", err);
+        process::exit(1);
+    });
+
     log::info!("Starting bot...");
 
-    let bot = Bot::from_env().auto_send();
+    let api = telegram_bot::Api::new(bot_token);
     let chat_ids = Arc::new(Mutex::new(chat_id::get_stored_chat_ids().unwrap()));
+
     let (tx, mut rx) = mpsc::channel::<String>(2);
 
     tokio::task::spawn(async move {
@@ -40,60 +46,78 @@ async fn main() {
 
     let notify_loop = async {
         while let Some(message) = rx.recv().await {
-            notify(&bot, &message, chat_ids.clone())
+            notify(&api, &message, chat_ids.clone())
                 .await
                 .unwrap_or_else(|err| log::error!("Failed to notify users: {}", err));
         }
     };
 
-    let bot_loop = teloxide::repl(
-        bot.clone(),
-        |message: Message, _bot: AutoSend<Bot>| async move {
-            let text = match message.text() {
-                Some(text) => text,
-                None => "[no message]",
-            };
-            let username = match message.chat.username() {
-                Some(user) => user,
-                None => "[unknown]",
-            };
-            log::info!("Received message \"{}\" from user {}", text, username);
+    let bot_api = api.clone();
+    let bot_loop = async {
+        let mut stream = bot_api.stream();
+        while let Some(update) = stream.next().await {
+            if let Ok(update) = update {
+                if let UpdateKind::Message(message) = update.kind {
+                    if let MessageKind::Text { ref data, .. } = message.kind {
+                        let username = match message.from.username {
+                            Some(user) => user,
+                            None => String::from("[unknown user]"),
+                        };
+                        log::info!("Received message from {}: \"{}\"", username, data);
 
-            // let mut chat_ids = chat_ids.lock().unwrap();
-            // let chat_id = chat_id::chat_id_to_i64(message.chat.id);
-            // if !chat_ids.contains(&chat_id) {
-            //     chat_ids.push(chat_id);
-            //     chat_id::save_chat_ids(&chat_ids).unwrap_or_else(|err| {
-            //         log::error!("Failed to add ID: {}", err);
-            //     });
-            // }
-            respond(())
-        },
-    );
+                        let mut chat_ids = chat_ids.lock().unwrap();
+                        let chat_id = message.chat.id();
+                        if !chat_ids.contains(&chat_id) {
+                            chat_ids.push(chat_id);
+                            chat_id::save_chat_ids(&chat_ids).unwrap_or_else(|err| {
+                                log::error!("Failed to add ID: {}", err);
+                            });
+                            let send_result = bot_api
+                                .send(SendMessage::new(chat_id, "Hi! I'll ping you at 9 am."))
+                                .await;
+                            if let Err(err) = send_result {
+                                log::error!("Failed to send message: {}", err);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
 
     tokio::join!(notify_loop, bot_loop);
 }
 
 async fn notify(
-    bot: &AutoSend<Bot>,
+    api: &telegram_bot::Api,
     message: &str,
     chat_ids: ShareableIds,
 ) -> Result<(), Box<dyn Error>> {
     let chat_ids = lock_and_clone_chat_ids(chat_ids);
     for chat_id in chat_ids {
-        bot.send_sticker(
-            ChatId(chat_id),
-            InputFile::file_id(
-                "CAACAgIAAxkBAAMHYoAnQ-mjFlYcQI7MY6ofspGVa50AAjkBAAIQIQIQ0zO07gSDOlQkBA",
-            ),
-        )
-        .await?;
-        bot.send_message(ChatId(chat_id), message).await?;
+        let text_message = SendMessage::new(chat_id, message);
+        let text_result = api.send(text_message).await;
+        if let Err(err) = text_result {
+            log::error!(
+                "Failed to send text message in chat ID {}: {}",
+                chat_id,
+                err
+            );
+        }
+        // api.send()
+        // bot.send_sticker(
+        //     ChatId(chat_id),
+        //     InputFile::file_id(
+        //         "CAACAgIAAxkBAAMHYoAnQ-mjFlYcQI7MY6ofspGVa50AAjkBAAIQIQIQ0zO07gSDOlQkBA",
+        //     ),
+        // )
+        // .await?;
+        // bot.send_message(ChatId(chat_id), message).await?;
     }
     Ok(())
 }
 
-fn lock_and_clone_chat_ids(chat_ids: ShareableIds) -> Vec<i64> {
+fn lock_and_clone_chat_ids(chat_ids: ShareableIds) -> Vec<ChatId> {
     let chat_ids = chat_ids.lock().unwrap();
     chat_ids.clone()
 }
