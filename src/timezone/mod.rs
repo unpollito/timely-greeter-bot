@@ -23,7 +23,7 @@ impl TimezoneGreeter {
             let is_yet_to_greet_today =
                 stored_time.is_none() || stored_time.unwrap().day() != tz_time.day();
 
-            if (does_time_match && is_yet_to_greet_today) {
+            if does_time_match && is_yet_to_greet_today {
                 cities_to_greet.push(get_timezone_name(tz));
                 self.last_greeted.insert(tz.name().to_string(), tz_time);
             }
@@ -49,6 +49,20 @@ fn get_timezone_name(tz: chrono_tz::Tz) -> String {
             let split: Vec<&str> = full_name.split("/").collect();
             String::from(split[split.len() - 1]).replace("_", " ")
         }
+    }
+}
+
+pub fn get_good_morning_message(cities: &Vec<String>) -> String {
+    if cities.len() == 0 {
+        String::from("")
+    } else if cities.len() == 1 {
+        cities[0].clone()
+    } else {
+        String::from(format!(
+            "{}, and {}",
+            cities[..cities.len() - 1].join(", "),
+            cities[cities.len() - 1],
+        ))
     }
 }
 
