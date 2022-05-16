@@ -39,6 +39,7 @@ impl TimezoneGreeter {
 
 fn get_timezone_name(tz: chrono_tz::Tz) -> String {
     match tz.name() {
+        "Antarctica/Casey" => String::from("Casey Island"),
         "Atlantic/Canary" => String::from("Canary Islands"),
         "Atlantic/Faroe" => String::from("Faroe Islands"),
         "America/BlancSablon" => String::from("Blanc-Sablon"),
@@ -47,6 +48,7 @@ fn get_timezone_name(tz: chrono_tz::Tz) -> String {
         "America/PortauPrince" => String::from("Port-au-prince"),
         "America/St_Johns" => String::from("St John's"),
         "Antarctica/DumontDUrville" => String::from("Dumont d'Urville"),
+        "Australia/Lord_Howe" => String::from("Lord Howe Island"),
         "Indian/Cocos" => String::from("Cocos Islands"),
         "Pacific/Chatham" => String::from("Chatham Islands"),
         "Pacific/Easter" => String::from("Easter Island"),
