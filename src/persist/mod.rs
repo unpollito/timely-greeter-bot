@@ -45,6 +45,12 @@ pub fn get_stored_update_id() -> Result<i64, Box<dyn Error>> {
     }
 }
 
+pub fn save_chat_ids_or_print_error(ids: &[i64]) -> () {
+    save_chat_ids(ids).unwrap_or_else(|err| {
+        log::error!("Failed to persist chat IDs: {}", err);
+    });
+}
+
 pub fn save_chat_ids(ids: &[i64]) -> Result<(), Box<dyn Error>> {
     let content = ids
         .into_iter()

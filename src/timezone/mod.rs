@@ -4,6 +4,8 @@ use std::collections::HashMap;
 
 mod constants;
 
+pub mod greeter_loop;
+
 pub struct TimezoneGreeter {
     last_greeted: HashMap<String, chrono::DateTime<chrono_tz::Tz>>,
 }
@@ -46,7 +48,11 @@ fn get_timezone_name(tz: chrono_tz::Tz) -> String {
         "America/St_Johns" => String::from("St John's"),
         "Antarctica/DumontDUrville" => String::from("Dumont d'Urville"),
         "Indian/Cocos" => String::from("Cocos Islands"),
+        "Pacific/Chatham" => String::from("Chatham Islands"),
         "Pacific/Easter" => String::from("Easter Island"),
+        "Pacific/Enderbury" => String::from("Enderbury Island"),
+        "Pacific/Gambier" => String::from("Gambier Islands"),
+        "Pacific/Marquesas" => String::from("Marquesas Islands"),
         other => {
             let full_name = String::from(other);
             let split: Vec<&str> = full_name.split("/").collect();
