@@ -33,10 +33,9 @@ fn main() {
         });
         let client = reqwest::blocking::Client::new();
         loop {
-            thread::sleep(Duration::from_millis(250));
             let req = client
                 .get(format!(
-                    "{}/getUpdates?timeout=5&offset={}",
+                    "{}/getUpdates?timeout=20&offset={}",
                     bot_loop_api_url,
                     last_update_id + 1,
                 ))
