@@ -2,3 +2,5 @@
 .env
 .idea
 .vscode
+chat_ids.txt
+update_id.txt

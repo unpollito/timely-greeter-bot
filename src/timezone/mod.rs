@@ -52,14 +52,14 @@ fn get_timezone_name(tz: chrono_tz::Tz) -> String {
     }
 }
 
-pub fn get_good_morning_message(cities: &Vec<String>) -> String {
+pub fn get_good_morning_message(cities: &Vec<String>) -> Option<String> {
     if cities.len() == 0 {
-        String::from("")
+        None
     } else if cities.len() == 1 {
-        cities[0].clone()
+        Some(format!("Good morning to {}!", cities[0]))
     } else {
-        String::from(format!(
-            "{}, and {}",
+        Some(format!(
+            "Good morning to {}, and {}!",
             cities[..cities.len() - 1].join(", "),
             cities[cities.len() - 1],
         ))
