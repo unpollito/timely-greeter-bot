@@ -1,5 +1,7 @@
 use std::{collections::HashMap, thread};
 
+use reqwest::blocking::Response;
+
 use self::types::TelegramUpdatesResponse;
 
 use super::{persist, ShareableIds};
@@ -31,13 +33,14 @@ pub fn spawn_bot_loop(chat_ids: &ShareableIds, bot_token: &str) -> () {
                     Some(text) => text,
                     None => String::from("[no message]"),
                 };
+                let chat_id = update.message.chat.id;
                 log::info!(
-                    "Received message from {}: \"{}\"",
+                    "Received message from {} (chat ID: {}): \"{}\"",
                     update.message.from.username,
+                    chat_id,
                     text
                 );
 
-                let chat_id = update.message.chat.id;
                 if text == "/stop" {
                     let mut chat_ids = chat_ids.lock().unwrap();
                     let index_result = chat_ids.iter().position(|&x| x == chat_id);
@@ -108,9 +111,8 @@ pub fn send_message(
     body.insert("chat_id", chat_id.to_string());
     body.insert("text", String::from(message));
     let url = get_telegram_api_url(token, "sendMessage");
-    if let Err(err) = client.post(url).json(&body).send() {
-        log::error!("Failed to send message: {}", err);
-    }
+    let response_result = client.post(url).json(&body).send();
+    handle_maybe_request_failure(response_result, chat_id, "message");
 }
 
 pub fn send_sticker(
@@ -123,8 +125,28 @@ pub fn send_sticker(
     body.insert("chat_id", chat_id.to_string());
     body.insert("sticker", String::from(sticker_id));
     let url = get_telegram_api_url(token, "sendSticker");
-    if let Err(err) = client.post(url).json(&body).send() {
-        log::error!("Failed to send  {}", err);
+    let response_result = client.post(url).json(&body).send();
+    handle_maybe_request_failure(response_result, chat_id, "sticker");
+}
+
+fn handle_maybe_request_failure(
+    response_result: Result<Response, reqwest::Error>,
+    chat_id: i64,
+    request_type: &str,
+) -> () {
+    if let Err(err) = response_result {
+        log::error!("Failed to send message for chat ID {}: {}", chat_id, err);
+    } else {
+        let response = response_result.unwrap();
+        if response.status().is_client_error() || response.status().is_server_error() {
+            log::error!(
+                "Failed to send {} for chat ID {}, got an status code {}: {:?}",
+                request_type,
+                chat_id,
+                response.status(),
+                response
+            );
+        }
     }
 }
 
