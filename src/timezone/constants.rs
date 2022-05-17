@@ -1,6 +1,6 @@
 pub const GREET_AT_HOUR: u32 = 9;
 
-pub const TIMEZONES: [chrono_tz::Tz; 228] = [
+pub const TIMEZONES: [chrono_tz::Tz; 229] = [
     chrono_tz::Africa::Abidjan,
     chrono_tz::Africa::Accra,
     chrono_tz::Africa::Algiers,
@@ -172,6 +172,7 @@ pub const TIMEZONES: [chrono_tz::Tz; 228] = [
     chrono_tz::Asia::Yerevan,
     chrono_tz::Atlantic::Azores,
     chrono_tz::Atlantic::Bermuda,
+    chrono_tz::Atlantic::Canary,
     chrono_tz::Atlantic::Cape_Verde,
     chrono_tz::Atlantic::Faroe,
     chrono_tz::Atlantic::Madeira,

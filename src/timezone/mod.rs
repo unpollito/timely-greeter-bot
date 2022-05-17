@@ -17,6 +17,14 @@ impl TimezoneGreeter {
         }
     }
 
+    // TODO:
+    // This could be a hell of a lot more efficient.
+    // For instance, if I just ran this loop once and stored the next UTC
+    // timestamp when I should greet each place, then just looped over the list
+    // of timestamps to see which ones are due.
+    // But at the end of the day, this just takes ~0.01s to run, it's done
+    // once per minute (at the time of writing) and I don't think it's a good
+    // time investment.
     pub fn get_cities_to_greet(&mut self) -> Vec<String> {
         let mut cities_to_greet: Vec<String> = vec![];
         let now = chrono::Utc::now().naive_utc();
@@ -49,6 +57,7 @@ fn get_timezone_name(tz: chrono_tz::Tz) -> String {
         "America/St_Johns" => String::from("St John's"),
         "Antarctica/DumontDUrville" => String::from("Dumont d'Urville"),
         "Australia/Lord_Howe" => String::from("Lord Howe Island"),
+        "Indian/Christmas" => String::from("Christmas Island"),
         "Indian/Cocos" => String::from("Cocos Islands"),
         "Pacific/Chatham" => String::from("Chatham Islands"),
         "Pacific/Easter" => String::from("Easter Island"),
