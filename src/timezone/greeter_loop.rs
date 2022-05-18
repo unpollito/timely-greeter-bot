@@ -1,15 +1,20 @@
-use std::{thread, time::Duration};
+use std::error::Error;
+
+use tokio::time::{sleep, Duration};
 
 use crate::ShareableIds;
 
 const GOOD_MORNING_STICKER_ID: &str =
     "CAACAgIAAxkBAAMHYoAnQ-mjFlYcQI7MY6ofspGVa50AAjkBAAIQIQIQ0zO07gSDOlQkBA";
 
-pub fn run_greeter_loop_in_current_thread(chat_ids: &ShareableIds, bot_token: &str) -> ! {
-    let client = reqwest::blocking::Client::new();
+pub async fn run_greeter_loop(
+    chat_ids: &ShareableIds,
+    bot_token: &str,
+) -> Result<(), Box<dyn Error>> {
+    let client = reqwest::Client::new();
     let mut greeter = super::TimezoneGreeter::new();
     loop {
-        thread::sleep(Duration::from_secs(60));
+        sleep(Duration::from_secs(60)).await;
         let cities_to_greet = greeter.get_cities_to_greet();
         if let Some(message) = super::get_good_morning_message(&cities_to_greet) {
             log::info!("{}", message);
@@ -20,8 +25,9 @@ pub fn run_greeter_loop_in_current_thread(chat_ids: &ShareableIds, bot_token: &s
                     &bot_token,
                     chat_id,
                     GOOD_MORNING_STICKER_ID,
-                );
-                crate::telegram::send_message(&client, &bot_token, chat_id, &message);
+                )
+                .await;
+                crate::telegram::send_message(&client, &bot_token, chat_id, &message).await;
             }
         } else {
             log::debug!("No cities to greet");
