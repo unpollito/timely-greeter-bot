@@ -13,9 +13,11 @@ async fn main() {
     log::info!("Starting bot...");
 
     let chat_ids: ShareableIds = Arc::new(Mutex::new(persist::get_stored_chat_ids().unwrap()));
+    let bot = SimpleTelegramBot::new(bot_token);
+    let sender = bot.sender();
 
-    let bot_loop_handle = run_bot_loop(&chat_ids, &bot_token);
-    let greeter_handle = timezone::greeter_loop::run_greeter_loop(&chat_ids, &bot_token);
+    let bot_loop_handle = run_bot_loop(chat_ids.clone(), sender.clone(), bot.updater());
+    let greeter_handle = timezone::greeter_loop::run_greeter_loop(&chat_ids, sender.clone());
 
     let (first, second) = tokio::join!(bot_loop_handle, greeter_handle);
     if let Err(err) = first {
