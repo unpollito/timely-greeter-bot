@@ -1,5 +1,5 @@
-use futures::lock::Mutex;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 extern crate chrono;
 extern crate chrono_tz;
