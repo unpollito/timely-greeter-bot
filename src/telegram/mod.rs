@@ -42,7 +42,7 @@ pub async fn run_bot_loop(chat_ids: &ShareableIds, bot_token: &str) -> Result<()
             );
 
             if text == "/stop" {
-                let mut chat_ids = chat_ids.lock().unwrap();
+                let mut chat_ids = chat_ids.lock().await;
                 let index_result = chat_ids.iter().position(|&x| x == chat_id);
                 if index_result.is_some() {
                     chat_ids.remove(index_result.unwrap());
@@ -56,7 +56,7 @@ pub async fn run_bot_loop(chat_ids: &ShareableIds, bot_token: &str) -> Result<()
                     .await;
                 }
             } else {
-                let mut chat_ids = chat_ids.lock().unwrap();
+                let mut chat_ids = chat_ids.lock().await;
                 let index_result = chat_ids.iter().position(|&x| x == chat_id);
                 if index_result.is_some() {
                     send_message(

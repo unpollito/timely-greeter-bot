@@ -1,10 +1,6 @@
-use std::{
-    process,
-    sync::{Arc, Mutex},
-};
+use futures::lock::Mutex;
+use std::{process, sync::Arc};
 use timely_greeter_bot::{env, persist, telegram::*, timezone};
-
-type ShareableIds = Arc<Mutex<Vec<i64>>>;
 
 #[tokio::main]
 async fn main() {

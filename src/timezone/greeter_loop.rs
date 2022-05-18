@@ -18,16 +18,22 @@ pub async fn run_greeter_loop(
         let cities_to_greet = greeter.get_cities_to_greet();
         if let Some(message) = super::get_good_morning_message(&cities_to_greet) {
             log::info!("{}", message);
-            let chat_ids = lock_and_clone_chat_ids(chat_ids);
-            for chat_id in chat_ids {
-                crate::telegram::send_sticker(
-                    &client,
-                    &bot_token,
-                    chat_id,
-                    GOOD_MORNING_STICKER_ID,
-                )
-                .await;
-                crate::telegram::send_message(&client, &bot_token, chat_id, &message).await;
+            match lock_and_clone_chat_ids(chat_ids).await {
+                Ok(chat_ids) => {
+                    for chat_id in chat_ids {
+                        crate::telegram::send_sticker(
+                            &client,
+                            &bot_token,
+                            chat_id,
+                            GOOD_MORNING_STICKER_ID,
+                        )
+                        .await;
+                        crate::telegram::send_message(&client, &bot_token, chat_id, &message).await;
+                    }
+                }
+                Err(err) => {
+                    log::error!("Failed to lock and clone chat IDs: {}", err);
+                }
             }
         } else {
             log::debug!("No cities to greet");
@@ -35,7 +41,7 @@ pub async fn run_greeter_loop(
     }
 }
 
-fn lock_and_clone_chat_ids(chat_ids: &ShareableIds) -> Vec<i64> {
-    let chat_ids = chat_ids.lock().unwrap();
-    chat_ids.clone()
+async fn lock_and_clone_chat_ids(chat_ids: &ShareableIds) -> Result<Vec<i64>, Box<dyn Error>> {
+    let chat_ids = chat_ids.lock().await;
+    Ok(chat_ids.clone())
 }
