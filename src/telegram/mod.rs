@@ -15,41 +15,46 @@ pub async fn run_bot_loop(
             None => break,
             Some(response) => {
                 for update in response.result {
-                    let text = match update.message.text {
-                        Some(text) => text,
-                        None => String::from("[no message]"),
-                    };
-                    let chat_id = update.message.chat.id;
-                    log::info!(
-                        "Received message from {} (chat ID: {}): \"{}\"",
-                        update.message.from.username,
-                        chat_id,
-                        text
-                    );
+                    if let Some(message) = update.message {
+                        let text = match message.text {
+                            Some(text) => text,
+                            None => String::from("[no message]"),
+                        };
+                        let chat_id = message.chat.id;
+                        log::info!(
+                            "Received message from {} (chat ID: {}): \"{}\"",
+                            message.from.username,
+                            chat_id,
+                            text
+                        );
 
-                    if text == "/stop" {
-                        let mut chat_ids = chat_ids.lock().await;
-                        let index_result = chat_ids.iter().position(|&x| x == chat_id);
-                        if index_result.is_some() {
-                            chat_ids.remove(index_result.unwrap());
-                            persist::save_chat_ids_or_print_error(&chat_ids);
-                            sender
-                                .send_message(chat_id, "OK, I won't greet you anymore. :'(")
-                                .await;
-                        }
-                    } else {
-                        let mut chat_ids = chat_ids.lock().await;
-                        let index_result = chat_ids.iter().position(|&x| x == chat_id);
-                        if index_result.is_some() {
-                            sender
-                                .send_message(chat_id, "You are already being greeted! Chill. :P")
-                                .await;
+                        if text == "/stop" {
+                            let mut chat_ids = chat_ids.lock().await;
+                            let index_result = chat_ids.iter().position(|&x| x == chat_id);
+                            if index_result.is_some() {
+                                chat_ids.remove(index_result.unwrap());
+                                persist::save_chat_ids_or_print_error(&chat_ids);
+                                sender
+                                    .send_message(chat_id, "OK, I won't greet you anymore. :'(")
+                                    .await;
+                            }
                         } else {
-                            chat_ids.push(chat_id);
-                            persist::save_chat_ids_or_print_error(&chat_ids);
-                            sender
-                                .send_message(chat_id, "I'll greet you when it's morning. :)")
-                                .await
+                            let mut chat_ids = chat_ids.lock().await;
+                            let index_result = chat_ids.iter().position(|&x| x == chat_id);
+                            if index_result.is_some() {
+                                sender
+                                    .send_message(
+                                        chat_id,
+                                        "You are already being greeted! Chill. :P",
+                                    )
+                                    .await;
+                            } else {
+                                chat_ids.push(chat_id);
+                                persist::save_chat_ids_or_print_error(&chat_ids);
+                                sender
+                                    .send_message(chat_id, "I'll greet you when it's morning. :)")
+                                    .await
+                            }
                         }
                     }
                 }
