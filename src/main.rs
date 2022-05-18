@@ -1,6 +1,6 @@
 use futures::lock::Mutex;
 use std::{process, sync::Arc};
-use timely_greeter_bot::{env, persist, telegram::*, timezone};
+use timely_greeter_bot::{env, persist, telegram::*, timezone, ShareableIds};
 
 #[tokio::main]
 async fn main() {
