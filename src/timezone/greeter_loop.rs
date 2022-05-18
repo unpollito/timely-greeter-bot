@@ -1,8 +1,8 @@
+use simple_telegram_bot::SimpleTelegramBotSender;
 use std::error::Error;
-
 use tokio::time::{sleep, Duration};
 
-use crate::{telegram::SimpleTelegramBotSender, ShareableIds};
+use crate::ShareableIds;
 
 const GOOD_MORNING_STICKER_ID: &str =
     "CAACAgIAAxkBAAMHYoAnQ-mjFlYcQI7MY6ofspGVa50AAjkBAAIQIQIQ0zO07gSDOlQkBA";

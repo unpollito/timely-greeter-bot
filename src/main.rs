@@ -1,3 +1,4 @@
+use simple_telegram_bot::SimpleTelegramBot;
 use std::{process, sync::Arc};
 use timely_greeter_bot::{env, persist, telegram::*, timezone, ShareableIds};
 use tokio::sync::Mutex;
