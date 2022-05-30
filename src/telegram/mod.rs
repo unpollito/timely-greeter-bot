@@ -1,6 +1,8 @@
-use super::{persist, ShareableIds};
-use simple_telegram_bot::{SimpleTelegramBotSender, SimpleTelegramBotUpdater};
 use std::error::Error;
+
+use simple_telegram_bot::{SimpleTelegramBotSender, SimpleTelegramBotUpdater};
+
+use super::{persist, ShareableIds};
 
 pub async fn run_bot_loop(
     chat_ids: ShareableIds,
@@ -21,9 +23,14 @@ pub async fn run_bot_loop(
                             None => String::from("[no message]"),
                         };
                         let chat_id = message.chat.id;
+                        let username = if let Some(username) = message.from.username {
+                            username
+                        } else {
+                            String::from("unknown user")
+                        };
                         log::info!(
                             "Received message from {} (chat ID: {}): \"{}\"",
-                            message.from.username,
+                            username,
                             chat_id,
                             text
                         );
